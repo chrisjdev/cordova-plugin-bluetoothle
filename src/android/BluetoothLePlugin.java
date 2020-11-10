@@ -105,7 +105,14 @@ public class BluetoothLePlugin extends CordovaPlugin {
   private final String keyMatchMode = "matchMode";
   private final String keyMatchNum = "matchNum";
   private final String keyCallbackType = "callbackType";
+  private final String keyAdvertisementRaw = "advertisementRaw";
   private final String keyAdvertisement = "advertisement";
+  private final String keyServiceUuids = "serviceUuids";
+  private final String keyLocalName = "localName";
+  private final String keySolicitedServiceUuids = "solicitedServiceUuids";
+  private final String keyIsConnectable = "isConnectable";
+  private final String keyServiceData = "serviceData";
+  private final String keyTxPowerLevel = "txPowerLevel";
   private final String keyUuid = "uuid";
   private final String keyService = "service";
   private final String keyServices = "services";
@@ -2997,16 +3004,53 @@ public class BluetoothLePlugin extends CordovaPlugin {
             addProperty(returnObj, keyName, result.getScanRecord().getDeviceName().replace("\0", ""));
           }
           addProperty(returnObj, keyRssi, result.getRssi());
-          addPropertyBytes(returnObj, keyAdvertisement, result.getScanRecord().getBytes());
+          addPropertyBytes(returnObj, keyAdvertisementRaw, result.getScanRecord().getBytes());
           addProperty(returnObj, keyStatus, statusScanResult);
-          List<ParcelUuid> serviceUuids = result.getScanRecord().getServiceUuids();
-          JSONArray services = new JSONArray();
-          for (ParcelUuid uuid : serviceUuids) {
-            services.put(uuid.toString());
+          
+          JSONObject advertisementInfo = new JSONObject();
+          ScanRecord scanRecord = result.getScanRecord();
+          if(scanRecord.getTxPowerLevel() != Integer.MIN_VALUE) {
+            addProperty(advertisementInfo, keyTxPowerLevel, scanRecord.getTxPowerLevel());
           }
-          if(services.length() > 0) {
-            addProperty(returnObj, keyServices, services);
+
+          List<ParcelUuid> serviceUuids = scanRecord.getServiceUuids();
+          JSONArray serviceUuidsOut = new JSONArray();
+          if(serviceUuids != null) {
+            for (ParcelUuid uuid : serviceUuids) {
+              serviceUuidsOut.put(uuid.toString());
+            }
           }
+          addProperty(advertisementInfo, keyServiceUuids, serviceUuidsOut);
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            addProperty(advertisementInfo, keyIsConnectable, result.isConnectable()? 1: 0);
+          }
+
+          String localName = result.getScanRecord().getDeviceName();
+          if(localName != null) {
+            addProperty(advertisementInfo, keyLocalName, localName);
+          }
+
+          JSONArray solicitedServiceUuidsOut = new JSONArray();
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            List<ParcelUuid> solicitationUuids = scanRecord.getServiceSolicitationUuids();
+            if(solicitationUuids != null) {
+              for (ParcelUuid uuid : solicitationUuids) {
+                solicitedServiceUuidsOut.put(uuid.toString());
+              }
+            }
+          }
+          addProperty(advertisementInfo, keySolicitedServiceUuids, solicitedServiceUuidsOut);
+
+          JSONObject serviceDataOut = new JSONObject();
+          Map<ParcelUuid, byte[]> serviceDataMap = scanRecord.getServiceData();
+          if(serviceDataMap != null) {
+            for(ParcelUuid uuid : serviceDataMap.keySet()) {
+              addPropertyBytes(serviceDataOut, uuid.toString(), serviceDataMap.get(uuid));
+            }
+          }
+          addProperty(advertisementInfo, keyServiceData, serviceDataOut);
+
+          addProperty(returnObj, keyAdvertisement, advertisementInfo);
 
           PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, returnObj);
           pluginResult.setKeepCallback(true);
