@@ -1,20 +1,6 @@
 package com.randdusing.bluetoothle;
 
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.PluginResult;
-
 import android.Manifest;
-
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Build;
-import android.os.ParcelUuid;
-import android.provider.Settings;
-import android.util.Base64;
-
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothAdapter.LeScanCallback;
@@ -23,9 +9,9 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.AdvertiseCallback;
@@ -33,24 +19,36 @@ import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
 import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.bluetooth.le.BluetoothLeScanner;
-import android.bluetooth.le.ScanSettings;
-import android.bluetooth.le.ScanFilter;
-import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanRecord;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Build;
+import android.os.ParcelUuid;
+import android.provider.Settings;
+import android.util.Base64;
+import android.util.Log;
+
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.util.Log;
 
 @SuppressWarnings("unchecked")
 
@@ -775,7 +773,7 @@ public class BluetoothLePlugin extends CordovaPlugin {
     }
 
     advertiser.stopAdvertising(advertiseCallback);
-    
+
     if (isAdvertising) isAdvertising = false;
 
     JSONObject returnObj = new JSONObject();
@@ -1020,9 +1018,9 @@ public class BluetoothLePlugin extends CordovaPlugin {
 
 
   /**
-  * Retrieves a minimal set of adapter details
-  * (address, name, initialized state, enabled state, scanning state, discoverable state)
-  */
+   * Retrieves a minimal set of adapter details
+   * (address, name, initialized state, enabled state, scanning state, discoverable state)
+   */
   private void getAdapterInfoAction(CallbackContext callbackContext) {
     JSONObject returnObj = new JSONObject();
 
@@ -2816,7 +2814,7 @@ public class BluetoothLePlugin extends CordovaPlugin {
 
             // Reset isAdvertising when adapter is off (if STATE_TURNING_OFF doesn't trigger)
             if (isAdvertising) isAdvertising = false;
-            
+
             gattServer = null;
 
             pluginResult = new PluginResult(PluginResult.Status.OK, returnObj);
@@ -3006,7 +3004,7 @@ public class BluetoothLePlugin extends CordovaPlugin {
           addProperty(returnObj, keyRssi, result.getRssi());
           addPropertyBytes(returnObj, keyAdvertisementRaw, result.getScanRecord().getBytes());
           addProperty(returnObj, keyStatus, statusScanResult);
-          
+
           JSONObject advertisementInfo = new JSONObject();
           ScanRecord scanRecord = result.getScanRecord();
           if(scanRecord.getTxPowerLevel() != Integer.MIN_VALUE) {
